@@ -1,0 +1,75 @@
+# Binaries
+monitor-agent
+monitor-agent-*
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+
+# Coverage
+*.cover
+*.out
+coverage.txt
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build artifacts
+dist/
+build/
+bin/
+
+# Go modules
+go.sum
+vendor/
+go.work
+
+# Data
+*.db
+*.log
+data/
+queue/
+
+# Configuration
+config.json
+config.*.json
+.env
+.env.local
+
+# Backups
+*.backup
+*.bak
+*~
+
+# Temporary
+tmp/
+temp/
+.tmp/
+
+# Docker
+docker-compose.override.yml
+
+# Kubernetes
+kubeconfig
+*.yaml.backup
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Security
+*.key
+*.pem
+secrets/

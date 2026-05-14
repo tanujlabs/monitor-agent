@@ -1,0 +1,94 @@
+services:
+  monitor-agent:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile
+    image: monitor-agent:latest
+    container_name: monitor-agent
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Environment variables
+    environment:
+      MONITOR_AGENT_TOKEN: ${MONITOR_AGENT_TOKEN:-project_change_me}
+      MONITOR_AGENT_URL: ${MONITOR_AGENT_URL:-https://api.myplatform.com}
+      MONITOR_AGENT_LOG_LEVEL: ${MONITOR_AGENT_LOG_LEVEL:-info}
+    
+    # Volume mounts
+    volumes:
+      # Config file
+      - ./config.json:/etc/monitor-agent/config.json:ro
+      
+      # Persistent queue
+      - ./data/queue.db:/var/lib/monitor-agent/queue.db
+      
+      # Log files to monitor
+      - /var/log/nginx:/var/log/nginx:ro
+      - /var/www/storage/logs:/var/www/storage/logs:ro
+      - /var/log/syslog:/var/log/syslog:ro
+      
+      # Docker socket (read-only for container stats)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      
+      # Host metrics
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    
+    # Network mode
+    network_mode: host
+    
+    # Resource limits
+    mem_limit: 256m
+    cpus: '2'
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    
+    # Read-only root filesystem
+    read_only: true
+    
+    # Drop capabilities
+    cap_drop:
+      - ALL
+    
+    # Add minimal capabilities
+    cap_add:
+      - NET_RAW
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=monitor-agent"
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+# Additional services for local development
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-app
+    ports:
+      - "8080:80"
+    volumes:
+      - ./examples/nginx.conf:/etc/nginx/nginx.conf:ro
+      - nginx-logs:/var/log/nginx
+    networks:
+      - default
+
+volumes:
+  nginx-logs:
+
+networks:
+  default:
+    driver: bridge
