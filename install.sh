@@ -69,11 +69,11 @@ install_go() {
   
   echo "Downloading Go from ${GO_URL}..."
   
-  # Download to /tmp
+  # Download to /tmp with timeout
   if command -v wget &>/dev/null; then
-    wget -q --show-progress -O "/tmp/${GO_TARBALL}" "${GO_URL}"
+    wget -q --show-progress --timeout=300 -O "/tmp/${GO_TARBALL}" "${GO_URL}"
   elif command -v curl &>/dev/null; then
-    curl -L -o "/tmp/${GO_TARBALL}" "${GO_URL}"
+    curl -L --max-time 300 -o "/tmp/${GO_TARBALL}" "${GO_URL}"
   else
     echo "ERROR: Neither wget nor curl found. Cannot download Go."
     exit 1
@@ -104,7 +104,11 @@ install_go() {
   echo "Go ${GO_VERSION} installed successfully."
 }
 
-if ! command -v go &>/dev/null; then
+# Check for Go in common locations first
+if [[ -x "/usr/local/go/bin/go" ]]; then
+  export PATH=/usr/local/go/bin:$PATH
+  echo "Using existing Go installation at /usr/local/go/bin/go"
+elif ! command -v go &>/dev/null; then
   install_go
 fi
 
