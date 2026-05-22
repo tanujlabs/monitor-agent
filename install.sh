@@ -51,9 +51,61 @@ echo "Detected: $OS / $ARCH"
 # ── Build binary ──────────────────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Function to install Go automatically
+install_go() {
+  echo "Go not found. Installing Go 1.22.2 automatically..."
+  
+  GO_VERSION="1.22.2"
+  GO_ARCH="amd64"
+  
+  if [[ "$ARCH" == "aarch64" ]]; then
+    GO_ARCH="arm64"
+  elif [[ "$ARCH" == "armv7l" ]]; then
+    GO_ARCH="armv6l"
+  fi
+  
+  GO_TARBALL="go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
+  GO_URL="https://go.dev/dl/${GO_TARBALL}"
+  
+  echo "Downloading Go from ${GO_URL}..."
+  
+  # Download to /tmp
+  if command -v wget &>/dev/null; then
+    wget -q --show-progress -O "/tmp/${GO_TARBALL}" "${GO_URL}"
+  elif command -v curl &>/dev/null; then
+    curl -L -o "/tmp/${GO_TARBALL}" "${GO_URL}"
+  else
+    echo "ERROR: Neither wget nor curl found. Cannot download Go."
+    exit 1
+  fi
+  
+  # Remove old installation if exists
+  sudo rm -rf /usr/local/go
+  
+  # Extract Go
+  echo "Extracting Go to /usr/local/go..."
+  sudo tar -C /usr/local -xzf "/tmp/${GO_TARBALL}"
+  
+  # Clean up
+  rm -f "/tmp/${GO_TARBALL}"
+  
+  # Add Go to PATH for current session
+  export PATH=/usr/local/go/bin:$PATH
+  
+  # Add Go to PATH permanently
+  if ! grep -q '/usr/local/go/bin' /etc/profile 2>/dev/null; then
+    echo 'export PATH=/usr/local/go/bin:$PATH' | sudo tee -a /etc/profile > /dev/null
+  fi
+  
+  if ! grep -q '/usr/local/go/bin' ~/.bashrc 2>/dev/null; then
+    echo 'export PATH=/usr/local/go/bin:$PATH' >> ~/.bashrc
+  fi
+  
+  echo "Go ${GO_VERSION} installed successfully."
+}
+
 if ! command -v go &>/dev/null; then
-  echo "ERROR: Go is not installed. Install Go 1.22+ from https://go.dev/dl/"
-  exit 1
+  install_go
 fi
 
 echo "Building monitor-agent..."
