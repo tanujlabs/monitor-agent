@@ -108,8 +108,12 @@ if ! command -v go &>/dev/null; then
   install_go
 fi
 
-echo "Building monitor-agent..."
+echo "Downloading Go dependencies..."
 cd "$SCRIPT_DIR"
+go mod download
+echo "Dependencies downloaded."
+
+echo "Building monitor-agent..."
 go build -ldflags="-s -w" -o "/tmp/${BINARY_NAME}" ./cmd/agent/
 echo "Build complete."
 
